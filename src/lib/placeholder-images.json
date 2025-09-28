@@ -1,0 +1,64 @@
+{
+  "placeholderImages": [
+    {
+      "id": "cappuccino",
+      "description": "A cup of cappuccino with latte art",
+      "imageUrl": "https://images.unsplash.com/photo-1659553653381-d98d2a831b8c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjYXBwdWNjaW5vJTIwY29mZmVlfGVufDB8fHx8MTc1ODk1NTkxOHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cappuccino coffee"
+    },
+    {
+      "id": "espresso",
+      "description": "A shot of espresso in a small cup",
+      "imageUrl": "https://images.unsplash.com/photo-1601390483714-955fd3066695?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxlc3ByZXNzbyUyMHNob3R8ZW58MHx8fHwxNzU4OTYwNDI0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "espresso shot"
+    },
+    {
+      "id": "iced-latte",
+      "description": "A tall glass of iced latte",
+      "imageUrl": "https://images.unsplash.com/photo-1533007716222-4b465613a984?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxpY2VkJTIwY29mZmVlfGVufDB8fHx8MTc1ODkyNjEyNHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "iced coffee"
+    },
+    {
+      "id": "croissant",
+      "description": "A golden brown croissant on a plate",
+      "imageUrl": "https://images.unsplash.com/photo-1618667060775-1fe102237f94?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjcm9pc3NhbnQlMjBwYXN0cnl8ZW58MHx8fHwxNzU4OTU1OTE4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "croissant pastry"
+    },
+    {
+      "id": "pasta-aglio-e-olio",
+      "description": "A plate of spaghetti aglio e olio with chili flakes",
+      "imageUrl": "https://images.unsplash.com/photo-1725977401522-f14e692cb7de?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxzcGFnaGV0dGklMjBwYXN0YXxlbnwwfHx8fDE3NTg4NjIwNzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "spaghetti pasta"
+    },
+    {
+      "id": "club-sandwich",
+      "description": "A club sandwich with a side of fries",
+      "imageUrl": "https://images.unsplash.com/photo-1665233272941-ae681d11fc06?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjbHViJTIwc2FuZHdpY2h8ZW58MHx8fHwxNzU4ODk3MTUzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "club sandwich"
+    },
+    {
+      "id": "chocolate-cake",
+      "description": "A slice of rich chocolate lava cake with a scoop of ice cream",
+      "imageUrl": "https://images.unsplash.com/photo-1586985289906-406988974504?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxjaG9jb2xhdGUlMjBjYWtlfGVufDB8fHx8MTc1ODkwMjgyN3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "chocolate cake"
+    },
+    {
+      "id": "cheesecake",
+      "description": "A slice of New York cheesecake with berry topping",
+      "imageUrl": "https://images.unsplash.com/photo-1636894435570-c3c400dfac53?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxjaGVlc2VjYWtlJTIwc2xpY2V8ZW58MHx8fHwxNzU4ODUwMjAwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cheesecake slice"
+    },
+    {
+      "id": "fresh-juice",
+      "description": "A glass of fresh orange juice",
+      "imageUrl": "https://images.unsplash.com/photo-1618046364546-81e9d03d39a6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxvcmFuZ2UlMjBqdWljZXxlbnwwfHx8fDE3NTg5MTcyOTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "orange juice"
+    },
+    {
+      "id": "margherita-pizza",
+      "description": "A classic Margherita pizza on a wooden board",
+      "imageUrl": "https://images.unsplash.com/photo-1595854341625-f33ee10dbf94?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxtYXJnaGVyaXRhJTIwcGl6emF8ZW58MHx8fHwxNzU4OTI4MTM1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "margherita pizza"
+    }
+  ]
+}

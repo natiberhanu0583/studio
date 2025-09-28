@@ -1,0 +1,45 @@
+Next.js specific files and directories
+############################################
+.next/
+out/
+.idx/             # Ignored based on the uploaded image (looks like an IDE/editor artifact)
+.modified         # Ignored based on the uploaded image (looks like a temporary/local file)
+
+Dependencies
+############################################
+node_modules
+/public/firebase-config.js  # Generated public config, often sensitive/local
+
+Testing and Coverage
+############################################
+coverage
+
+Environment variables
+############################################
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+Build output directories
+############################################
+dist/
+build/
+
+Logs and Debugging
+############################################
+.log
+npm-debug.log
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+OS and Editor files
+############################################
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+.swp

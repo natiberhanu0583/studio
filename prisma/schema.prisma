@@ -7,6 +7,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
+// For the auth to work
+
 model User {
   id        String    @id @default(cuid())
   name      String?
@@ -58,4 +61,47 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+
+// For the data to be stored
+
+
+model MenuItem {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String
+  price       Float
+  category    String
+  imageId     String
+  orderItems  OrderItem[]
+}
+
+model Usersclear {
+  id    Int     @id @default(autoincrement())
+  name  String
+  role  String   // e.g., 'Admin', 'Waiter', 'Chef', 'Customer'
+  phone String
+  email String   @unique // Added unique constraint for email, assuming it's used for auth
+}
+
+model Order {
+  id            Int       @id @default(autoincrement())
+  customerName  String
+  tableNumber   String    // Can be '-' for takeaway
+  status        String    // e.g., 'Received', 'Sent to Chef', 'Preparing', 'Ready', 'Delivered'
+  timestamp     DateTime  @default(now()) // Default to now, but can be set manually
+  total         Float
+  notes         String?
+  paymentStatus String    // e.g., 'Pending', 'Paid'
+  items         OrderItem[]
+}
+
+model OrderItem {
+  id          Int      @id @default(autoincrement())
+  orderId     Int
+  menuItemId  Int
+  quantity    Int      @default(1)
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade) // Cascade delete for items
+  menuItem    MenuItem @relation(fields: [menuItemId], references: [id])
 }

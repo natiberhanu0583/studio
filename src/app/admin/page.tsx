@@ -54,7 +54,6 @@ export default function AdminPage() {
   // ✅ Authorized admin — show dashboard
   return (
     <div className="space-y-8">
-      <Link href="/manage" className="float-start border bg-amber-400 px-5 py-2 rounded-md cursor-pointer w-fit z-50" >manage</Link>
       <div className="text-center">
         <h1 className="font-headline text-4xl md:text-5xl font-bold">Admin Dashboard</h1>
         <p className="mt-2 text-lg text-muted-foreground">Manage users and view sales reports.</p>
@@ -73,7 +72,7 @@ export default function AdminPage() {
           <UnpaidOrdersReport />
         </TabsContent>
         <TabsContent value="users">
-          
+          <UserManagement />
         </TabsContent>
       </Tabs>      
     </div>

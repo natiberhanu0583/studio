@@ -1,146 +1,159 @@
-
+// app/cafe-provider.tsx
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
-import type { Order, MenuItem, User, CartItem, OrderStatus, PaymentStatus } from '@/lib/types';
-import { menuItems as initialMenuItems, users as initialUsers, initialOrders } from '@/lib/data';
+import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
+import type { CartItem, OrderStatus, PaymentStatus } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
+// REAL SERVER ACTIONS
+import {
+  getMenuItems,
+  getUsers,
+  getOrders,
+  createOrder,
+  updateOrderStatus as serverUpdateOrderStatus,
+  updatePaymentStatus as serverUpdatePaymentStatus,
+  clearCompletedOrders,
+} from '@/app/actions';
+
+type UsersType = Awaited<ReturnType<typeof getUsers>>;
+type MenuItemsType = Awaited<ReturnType<typeof getMenuItems>>;
+type OrdersType = Awaited<ReturnType<typeof getOrders>>;
+
 interface CafeContextType {
-  menuItems: MenuItem[];
-  users: User[];
-  orders: Order[];
+  menuItems: MenuItemsType;
+  users: UsersType;
+  orders: OrdersType;
   cart: CartItem[];
-  addToCart: (menuItemId: number) => void;
-  removeFromCart: (menuItemId: number) => void;
+  addToCart: (id: number) => void;
+  removeFromCart: (id: number) => void;
   clearCart: () => void;
   getCartTotal: () => number;
-  placeOrder: (customerName: string, tableNumber: string, notes?: string) => void;
-  updateOrderStatus: (orderId: number, status: OrderStatus) => void;
-  updatePaymentStatus: (orderId: number, status: PaymentStatus) => void;
-  clearSalesData: () => void;
+  placeOrder: (name: string, table: string, notes?: string) => Promise<void>;
+  updateOrderStatus: (id: number, status: OrderStatus) => Promise<void>;
+  updatePaymentStatus: (id: number, status: PaymentStatus) => Promise<void>;
+  clearSalesData: () => Promise<void>;
   cartItemCount: number;
+  loading: boolean;
+  refetch: () => Promise<void>;
 }
 
 const CafeContext = createContext<CafeContextType | undefined>(undefined);
 
 export function CafeProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  const [menuItems] = useState<MenuItem[]>(initialMenuItems);
-  const [users] = useState<User[]>(initialUsers);
-  const [orders, setOrders] = useState<Order[]>(initialOrders);
+
+  const [menuItems, setMenuItems] = useState<MenuItemsType>([] as any);
+  const [users, setUsers] = useState<UsersType>([] as any);
+  const [orders, setOrders] = useState<OrdersType>([] as any);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const addToCart = (menuItemId: number) => {
-    setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.menuItemId === menuItemId);
-      if (existingItem) {
-        return prevCart.map((item) =>
-          item.menuItemId === menuItemId ? { ...item, quantity: item.quantity + 1 } : item
-        );
-      }
-      return [...prevCart, { menuItemId, quantity: 1 }];
-    });
-    const item = menuItems.find(i => i.id === menuItemId);
-    toast({
-        title: `${item?.name} added to order`,
-        description: "You can view your full order in the cart.",
-    })
-  };
-
-  const removeFromCart = (menuItemId: number) => {
-    setCart((prevCart) => {
-        const existingItem = prevCart.find((item) => item.menuItemId === menuItemId);
-        if (existingItem && existingItem.quantity > 1) {
-            return prevCart.map((item) =>
-            item.menuItemId === menuItemId ? { ...item, quantity: item.quantity - 1 } : item
-            );
-        }
-        return prevCart.filter((item) => item.menuItemId !== menuItemId);
-    });
-  };
-  
-  const clearCart = () => {
-    setCart([]);
-  };
-
-  const getCartTotal = () => {
-    return cart.reduce((total, cartItem) => {
-      const menuItem = menuItems.find((item) => item.id === cartItem.menuItemId);
-      return total + (menuItem?.price || 0) * cartItem.quantity;
-    }, 0);
-  };
-
-  const placeOrder = (customerName: string, tableNumber: string, notes?: string) => {
-    if (cart.length === 0) {
-        toast({
-            variant: "destructive",
-            title: "Your cart is empty",
-            description: "Please add items to your cart before placing an order.",
-        })
-        return;
-    };
-    if (!customerName || !tableNumber) {
-        toast({
-            variant: "destructive",
-            title: "Missing Information",
-            description: "Please enter a customer name and table number.",
-        });
-        return;
+  const fetchAll = async () => {
+    setLoading(true);
+    try {
+      const [menu, userList, orderList] = await Promise.all([
+        getMenuItems(),
+        getUsers(),
+        getOrders(),
+      ]);
+      setMenuItems(menu);
+      setUsers(userList);
+      setOrders(orderList);
+    } catch {
+      toast({ variant: 'destructive', title: 'Failed to load data' });
+    } finally {
+      setLoading(false);
     }
-
-    const newOrder: Order = {
-      id: orders.length + 1,
-      customerName,
-      tableNumber,
-      items: cart.map(cartItem => {
-        const menuItem = menuItems.find(item => item.id === cartItem.menuItemId)!;
-        return { menuItem, quantity: cartItem.quantity };
-      }),
-      status: 'Received',
-      timestamp: new Date().toISOString(),
-      total: getCartTotal(),
-      paymentStatus: 'Pending',
-      notes,
-    };
-    setOrders(prev => [newOrder, ...prev]);
-    setCart([]);
-    toast({
-        title: "Order Placed!",
-        description: "Your order has been sent to the kitchen.",
-    })
-  };
-  
-  const updateOrderStatus = (orderId: number, status: OrderStatus) => {
-    setOrders(prevOrders =>
-      prevOrders.map(order =>
-        order.id === orderId ? { ...order, status, timestamp: new Date().toISOString() } : order
-      )
-    );
   };
 
-  const updatePaymentStatus = (orderId: number, status: PaymentStatus) => {
-    setOrders(prevOrders =>
-      prevOrders.map(order =>
-        order.id === orderId ? { ...order, paymentStatus: status } : order
-      )
-    );
+  useEffect(() => { fetchAll(); }, []);
+
+  const refetch = fetchAll;
+
+  // CART
+  const addToCart = (id: number) => {
+    setCart(prev => {
+      const exists = prev.find(i => i.menuItemId === id);
+      return exists
+        ? prev.map(i => i.menuItemId === id ? { ...i, quantity: i.quantity + 1 } : i)
+        : [...prev, { menuItemId: id, quantity: 1 }];
+    });
+    const item = menuItems.find(i => i.id === id);
+    toast({ title: `${item?.name} added` });
   };
 
-  const clearSalesData = () => {
-    setOrders(prevOrders =>
-      prevOrders.filter(order => {
-        const isCompletedAndPaid = (order.status === 'Delivered' || order.status === 'Cancelled') && order.paymentStatus === 'Paid';
-        return !isCompletedAndPaid;
-      })
-    );
+  const removeFromCart = (id: number) => {
+    setCart(prev => {
+      const exists = prev.find(i => i.menuItemId === id);
+      if (!exists) return prev;
+      if (exists.quantity === 1) return prev.filter(i => i.menuItemId !== id);
+      return prev.map(i => i.menuItemId === id ? { ...i, quantity: i.quantity - 1 } : i);
+    });
   };
 
-  const cartItemCount = useMemo(() => {
-    return cart.reduce((total, item) => total + item.quantity, 0);
-  }, [cart]);
+  const clearCart = () => setCart([]);
 
-  const value = {
+  const getCartTotal = () => cart.reduce((sum, c) => {
+    const item = menuItems.find(m => m.id === c.menuItemId);
+    return sum + (item?.price || 0) * c.quantity;
+  }, 0);
+
+  // PLACE ORDER
+  const placeOrder = async (name: string, table: string, notes?: string) => {
+    if (cart.length === 0) { toast({ variant: 'destructive', title: 'Cart empty' }); return; }
+    if (!name || !table) { toast({ variant: 'destructive', title: 'Fill name & table' }); return; }
+
+    try {
+      await createOrder({
+        customerName: name,
+        tableNumber: table,
+        notes,
+        items: cart.map(c => ({ menuItemId: c.menuItemId, quantity: c.quantity })),
+        total: getCartTotal(),
+      });
+      clearCart();
+      await refetch();
+      toast({ title: 'Order sent to kitchen!' });
+    } catch {
+      toast({ variant: 'destructive', title: 'Failed to place order' });
+    }
+  };
+
+  // REAL DB STATUS UPDATES
+  const updateOrderStatus = async (orderId: number, status: OrderStatus) => {
+    try {
+      await serverUpdateOrderStatus(orderId, status);
+      await refetch();
+      toast({ title: `Status → ${status}` });
+    } catch {
+      toast({ variant: 'destructive', title: 'Status update failed' });
+    }
+  };
+
+  const updatePaymentStatus = async (orderId: number, status: PaymentStatus) => {
+    try {
+      await serverUpdatePaymentStatus(orderId, status);
+      await refetch();
+      toast({ title: 'Payment → Paid' });
+    } catch {
+      toast({ variant: 'destructive', title: 'Payment update failed' });
+    }
+  };
+
+  const clearSalesData = async () => {
+    try {
+      await clearCompletedOrders();
+      await refetch();
+      toast({ title: 'Old orders cleared' });
+    } catch {
+      toast({ variant: 'destructive', title: 'Clear failed' });
+    }
+  };
+
+  const cartItemCount = useMemo(() => cart.reduce((n, i) => n + i.quantity, 0), [cart]);
+
+  const value: CafeContextType = {
     menuItems,
     users,
     orders,
@@ -150,19 +163,19 @@ export function CafeProvider({ children }: { children: ReactNode }) {
     clearCart,
     getCartTotal,
     placeOrder,
-    updateOrderStatus,
-    updatePaymentStatus,
+    updateOrderStatus,      // ← REAL DB
+    updatePaymentStatus,    // ← REAL DB
     clearSalesData,
     cartItemCount,
+    loading,
+    refetch,
   };
 
   return <CafeContext.Provider value={value}>{children}</CafeContext.Provider>;
 }
 
-export function useCafe() {
-  const context = useContext(CafeContext);
-  if (context === undefined) {
-    throw new Error('useCafe must be used within a CafeProvider');
-  }
-  return context;
-}
+export const useCafe = () => {
+  const ctx = useContext(CafeContext);
+  if (!ctx) throw new Error('useCafe must be inside CafeProvider');
+  return ctx;
+};

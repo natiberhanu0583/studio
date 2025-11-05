@@ -1,8 +1,8 @@
-// app/(waiter)/OrderCard.tsx  ← or wherever it lives
+// app/(waiter)/OrderCard.tsx
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,9 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Clock, CreditCard, User, Hash, MessageSquare } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import {
-  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useSession } from 'next-auth/react';
 
 const statusColors: Record<string, string> = {
   Received: 'bg-blue-500',
@@ -24,12 +23,27 @@ const statusColors: Record<string, string> = {
   Cancelled: 'bg-red-500',
 };
 
-const orderStatusOptions = ['Received', 'Sent to Chef', 'Preparing', 'Ready', 'Delivered', 'Cancelled'] as const;
-
 export default function OrderCard({ order }: { order: any }) {
   const { updateOrderStatus, updatePaymentStatus } = useCafe();
   const { toast } = useToast();
+  const { data: session } = useSession();
   const [isUpdating, setIsUpdating] = useState(false);
+
+  const userRole = session?.user?.role;
+  const isChef = ['Chef', 'chef'].includes(userRole || '');
+  const isWaiter = ['Waiter', 'waiter'].includes(userRole || '');
+  const isAdmin = ['Admin', 'admin'].includes(userRole || '');
+
+  // CHEF: Only allow Preparing → Ready
+  const chefAllowedStatuses = ['Preparing', 'Ready'];
+  const waiterAllowedStatuses = ['Received', 'Sent to Chef', 'Delivered', 'Cancelled'];
+  const allStatuses = ['Received', 'Sent to Chef', 'Preparing', 'Ready', 'Delivered', 'Cancelled'];
+
+  const allowedStatuses = isChef 
+    ? chefAllowedStatuses 
+    : (isWaiter || isAdmin) 
+      ? allStatuses 
+      : [];
 
   const handleStatusChange = async (newStatus: string) => {
     if (isUpdating) return;
@@ -38,14 +52,15 @@ export default function OrderCard({ order }: { order: any }) {
     try {
       await updateOrderStatus(order.id, newStatus as any);
       toast({ title: `Status → ${newStatus}` });
-    } catch {
-      toast({ variant: 'destructive', title: 'Update failed' });
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: err.message || 'Update failed' });
     } finally {
       setIsUpdating(false);
     }
   };
 
   const handlePayment = async () => {
+    if (!isWaiter && !isAdmin) return;
     try {
       await updatePaymentStatus(order.id, 'Paid');
       toast({ title: 'Paid!', description: 'Customer paid.' });
@@ -57,7 +72,7 @@ export default function OrderCard({ order }: { order: any }) {
   const isFinal = ['Delivered', 'Cancelled'].includes(order.status);
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col h-full">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
@@ -101,7 +116,7 @@ export default function OrderCard({ order }: { order: any }) {
         </div>
       </CardContent>
 
-      <CardFooter className="flex-col gap-3">
+      <CardFooter className="flex-col gap-3 border-t pt-3">
         <div className="w-full flex justify-between items-center">
           <span className="text-lg font-bold text-primary">
             {order.total.toFixed(2)} ETB
@@ -111,27 +126,40 @@ export default function OrderCard({ order }: { order: any }) {
           </Badge>
         </div>
 
-        {order.paymentStatus === 'Pending' && (
+        {/* PAYMENT BUTTON — WAITER & ADMIN ONLY */}
+        {(isWaiter || isAdmin) && order.paymentStatus === 'Pending' && (
           <Button onClick={handlePayment} className="w-full" disabled={isUpdating}>
             <CreditCard className="mr-2 h-4 w-4" />
             Mark as Paid
           </Button>
         )}
 
-        <Select
-          onValueChange={handleStatusChange}
-          defaultValue={order.status}
-          disabled={isFinal || isUpdating}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {orderStatusOptions.map(s => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* STATUS SELECT — ROLE-BASED OPTIONS */}
+        {allowedStatuses.length > 0 && !isFinal && (
+          <Select
+            onValueChange={handleStatusChange}
+            value={order.status}
+            disabled={isUpdating}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {allowedStatuses.map(s => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
+        {/* FINAL STATUS — NO CHANGES */}
+        {isFinal && (
+          <div className="w-full text-center text-muted-foreground text-sm">
+            Order is {order.status.toLowerCase()}
+          </div>
+        )}
       </CardFooter>
     </Card>
   );

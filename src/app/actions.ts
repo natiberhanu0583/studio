@@ -46,10 +46,10 @@ export async function getMenuItems(): Promise<MenuItem[]> {
 export async function getUsers() {
   // Only admins should see full user list
   const user = await getUserOrNull();
-  if (user?.role !== 'Admin') throw new Error('Admin only');
+  if (user?.role?.toLowerCase() !== 'admin') throw new Error('Admin only');
 
   return prisma.user.findMany({
-    select: { id: true, name: true, role: true, email: true},
+    select: { id: true, name: true, role: true, email: true },
   });
 }
 
@@ -81,7 +81,7 @@ export async function createOrder(data: {
   const user = await getUserOrNull();
 
   // Block Chef & Admin from placing orders
-  if (user && ['Chef', 'Admin'].includes(user.role)) {
+  if (user && ['chef', 'admin'].includes(user.role.toLowerCase())) {
     throw new Error('Chefs & Admins cannot place orders');
   }
 
@@ -110,7 +110,7 @@ export async function createOrder(data: {
 export async function updateOrderStatus(orderId: number, status: OrderStatus) {
   const user = await getUserOrNull();
   if (!user) throw new Error('Login required');
-  if (!['Waiter', 'Chef', 'Admin'].includes(user.role)) {
+  if (!['waiter', 'chef', 'admin'].includes(user.role.toLowerCase())) {
     throw new Error('Only Waiter, Chef, or Admin can update status');
   }
 
@@ -126,7 +126,7 @@ export async function updateOrderStatus(orderId: number, status: OrderStatus) {
 export async function updatePaymentStatus(orderId: number, status: PaymentStatus) {
   const user = await getUserOrNull();
   if (!user) throw new Error('Login required');
-  if (!['Waiter', 'Admin'].includes(user.role)) {
+  if (!['waiter', 'admin'].includes(user.role.toLowerCase())) {
     throw new Error('Only Waiter or Admin can update payment');
   }
 
@@ -141,7 +141,7 @@ export async function updatePaymentStatus(orderId: number, status: PaymentStatus
 // ------------------------------------------------------------------
 export async function clearCompletedOrders() {
   const user = await getUserOrNull();
-  if (!user || user.role !== 'Admin') throw new Error('Admin only');
+  if (!user || user.role.toLowerCase() !== 'admin') throw new Error('Admin only');
 
   await prisma.orderItem.deleteMany({
     where: {

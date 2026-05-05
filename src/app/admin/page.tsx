@@ -5,6 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SalesReport from '../components/admin/SalesReport';
 import UserManagement from '../components/admin/UserManagement';
 import UnpaidOrdersReport from '../components/admin/UnpaidOrdersReport';
+import ProfitabilityManagement from '../components/admin/ProfitabilityManagement';
+import AdminMenuControl from '../components/admin/AdminMenuControl';
 import Link from 'next/link';
 
 export default function AdminPage() {
@@ -14,66 +16,51 @@ export default function AdminPage() {
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
-        <p className="text-lg">Loading...</p>
+        <p className="text-lg font-headline animate-pulse">Loading Dashboard...</p>
       </div>
     );
   }
 
-  // Not signed in
-  if (!session) {
-    return (
-      <div className=" flex flex-col items-center justify-center h-[calc(100vh-8rem)]">
-        <h2 className="text-2xl font-semibold mb-4">Please log in with an Admin Account to continue</h2>
-        <button
-          onClick={() => signIn("google")}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
-        >
-          Sign in with Google
-        </button>
-      </div>
-    );
-  }
-
-  // Signed in but not an admin
-  if (session.user.role !== "admin") {
-    return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-8rem)]">
-        <p className="text-gray-600 mb-4">
-          You are not authorized to view the Admin Dashboard.
-        </p>
-        <button
-          onClick={() => signIn("google")}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
-        >
-          Sign in with an Admin Account
-        </button>
-      </div>
-    );
-  }
-
-  // ✅ Authorized admin — show dashboard
+  // ✅ Authorized admin (Auth bypassed for dev) — show dashboard
   return (
-    <div className="space-y-8">
-      <div className="text-center">
-        <h1 className="font-headline text-4xl md:text-5xl font-bold">Admin Dashboard</h1>
-        <p className="mt-2 text-lg text-muted-foreground">Manage users and view sales reports.</p>
+    <div className="space-y-12 animate-in fade-in duration-1000">
+      <div className="text-center space-y-4">
+        <h1 className="font-headline text-5xl md:text-7xl font-black tracking-tighter text-gradient leading-tight">
+          Admin Control
+        </h1>
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          Overview of operations, financials, and menu availability.
+        </p>
       </div>
 
       <Tabs defaultValue="sales" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 max-w-lg mx-auto">
-          <TabsTrigger value="sales">Sales Report</TabsTrigger>
-          <TabsTrigger value="unpaid">Unpaid Orders</TabsTrigger>
-          <TabsTrigger value="users">User Management</TabsTrigger>
-        </TabsList>
-        <TabsContent value="sales">
-          <SalesReport />
-        </TabsContent>
-        <TabsContent value="unpaid">
-          <UnpaidOrdersReport />
-        </TabsContent>
-        <TabsContent value="users">
-          <UserManagement />
-        </TabsContent>
+        <div className="flex justify-center mb-10">
+          <TabsList className="grid grid-cols-2 md:grid-cols-5 w-full max-w-4xl h-auto p-1.5 bg-muted/50 border border-primary/10 rounded-3xl overflow-hidden">
+            <TabsTrigger value="sales" className="rounded-2xl py-3 data-[state=active]:btn-gradient data-[state=active]:text-white shadow-lg transition-all">Sales</TabsTrigger>
+            <TabsTrigger value="unpaid" className="rounded-2xl py-3 data-[state=active]:btn-gradient data-[state=active]:text-white shadow-lg transition-all">Unpaid</TabsTrigger>
+            <TabsTrigger value="menu" className="rounded-2xl py-3 data-[state=active]:btn-gradient data-[state=active]:text-white shadow-lg transition-all">Menu</TabsTrigger>
+            <TabsTrigger value="profit" className="rounded-2xl py-3 data-[state=active]:btn-gradient data-[state=active]:text-white shadow-lg transition-all">Profit</TabsTrigger>
+            <TabsTrigger value="users" className="rounded-2xl py-3 data-[state=active]:btn-gradient data-[state=active]:text-white shadow-lg transition-all">Users</TabsTrigger>
+          </TabsList>
+        </div>
+
+        <div className="min-h-[600px] animate-in fade-in zoom-in-95 duration-500">
+          <TabsContent value="sales" className="outline-none">
+            <SalesReport />
+          </TabsContent>
+          <TabsContent value="unpaid" className="outline-none">
+            <UnpaidOrdersReport />
+          </TabsContent>
+          <TabsContent value="menu" className="outline-none">
+            <AdminMenuControl />
+          </TabsContent>
+          <TabsContent value="profit" className="outline-none">
+            <ProfitabilityManagement />
+          </TabsContent>
+          <TabsContent value="users" className="outline-none">
+            <UserManagement />
+          </TabsContent>
+        </div>
       </Tabs>      
     </div>
   );

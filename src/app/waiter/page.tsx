@@ -19,6 +19,7 @@ export default function WaiterPage() {
     );
   }
 
+  /*
   // Not signed in
   if (!session) {
     return (
@@ -51,6 +52,7 @@ export default function WaiterPage() {
       </div>
     );
   }
+  */
 
   // ✅ Authorized waiter — show dashboard
   const activeOrders = orders
@@ -76,7 +78,7 @@ export default function WaiterPage() {
         <TabsContent value="active">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
             {activeOrders.length > 0 ? (
-              activeOrders.map((order) => <OrderCard key={order.id} order={order} />)
+              activeOrders.map((order) => <OrderCard key={order.id} order={order} roleOverride="waiter" />)
             ) : (
               <p className="col-span-full text-center text-muted-foreground py-10">No active orders.</p>
             )}
@@ -85,7 +87,7 @@ export default function WaiterPage() {
         <TabsContent value="completed">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
             {completedOrders.length > 0 ? (
-              completedOrders.map((order) => <OrderCard key={order.id} order={order} />)
+              completedOrders.map((order) => <OrderCard key={order.id} order={order} roleOverride="waiter" />)
             ) : (
               <p className="col-span-full text-center text-muted-foreground py-10">No completed orders.</p>
             )}

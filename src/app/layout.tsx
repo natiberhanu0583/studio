@@ -4,10 +4,13 @@ import { Toaster } from '@/components/ui/toaster';
 import { CafeProvider } from '@/context/CafeContext';
 import Header from '@/components/common/Header';
 import { Providers } from "./provider";
+import { ThemeProvider } from "./components/theme-provider";
+import { NotificationBar } from '@/components/common/NotificationBar';
+import SplashScreen from '@/components/common/SplashScreen';
 
 export const metadata: Metadata = {
-  title: 'Shega Cafe',
-  description: 'Your neighborhood cafe for the finest coffee and food.',
+  title: 'Time Burger & Pizza',
+  description: 'The best burgers and pizzas in town.',
 };
 
 export default function RootLayout({
@@ -16,20 +19,29 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <Providers>
-          <CafeProvider>
-            <Header />
-            <main className="container mx-auto px-4 py-8">{children}</main>
-            <Toaster />
-          </CafeProvider>
-        </Providers>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Providers>
+            <CafeProvider>
+              <SplashScreen />
+              <Header />
+              <NotificationBar />
+              <main className="container mx-auto px-4 py-8">{children}</main>
+              <Toaster />
+            </CafeProvider>
+          </Providers>
+        </ThemeProvider>
       </body>
     </html>
   );

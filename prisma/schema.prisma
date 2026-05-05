@@ -72,8 +72,9 @@ model MenuItem {
   name        String
   description String
   price       Float
+  cost        Float    @default(0) // Default to 0 if not specified
   category    String
-  imageId     String
+  imageId     String?
   isAvailable Boolean @default(true)
   orderItems  OrderItem[]
 }

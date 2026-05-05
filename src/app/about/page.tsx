@@ -8,7 +8,7 @@ export default function AboutPage() {
       <div className="text-center">
         <h1 className="font-headline text-4xl md:text-5xl font-bold">About Us</h1>
         <p className="mt-2 text-lg text-muted-foreground">
-          The story and the creators behind Shega Cafe.
+          The story and the creators behind Time Burger & Pizza.
         </p>
       </div>
 

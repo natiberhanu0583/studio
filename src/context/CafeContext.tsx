@@ -2,8 +2,10 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
+import { useSession } from 'next-auth/react';
 import type { CartItem, OrderStatus, PaymentStatus } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { playNotificationSound } from '@/lib/notifications';
 
 // SERVER ACTIONS
 import {
@@ -14,9 +16,8 @@ import {
   updatePaymentStatus as serverUpdatePaymentStatus,
   clearCompletedOrders,
   toggleMenuItemAvailability,
+  getUsers,
 } from '@/app/actions';
-
-import { getUsers } from '@/app/actions';
 
 type UsersType = Awaited<ReturnType<typeof getUsers>>;
 type MenuItemsType = Awaited<ReturnType<typeof getMenuItems>>;
@@ -45,29 +46,49 @@ const CafeContext = createContext<CafeContextType | undefined>(undefined);
 
 export function CafeProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  const { data: session } = useSession();
+  const userRole = (session?.user as any)?.role || 'admin';
 
   const [menuItems, setMenuItems] = useState<MenuItemsType>([]);
   const [users, setUsers] = useState<UsersType>([]);
   const [orders, setOrders] = useState<OrdersType>([]);
+  const prevOrdersRef = React.useRef<OrdersType>([]); // Use Ref to avoid closure issues in interval
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchAll = async () => {
-    setLoading(true);
+  const fetchAll = async (isInitial = false) => {
+    if (isInitial) setLoading(true);
     try {
-      // GET SESSION FIRST
-      const sessionRes = await fetch('/api/auth/session');
-      const session = await sessionRes.json();
-      const userRole = session?.user?.role; // ← CAN BE null
-
-      // PASS ROLE — EVEN IF null → FILTERS HIDDEN ITEMS
-      const menu = await getMenuItems(userRole); // ← CRITICAL: PASS ROLE
+      const menu = await getMenuItems(userRole);
       const orderList = await getOrders();
+      const prevOrders = prevOrdersRef.current;
+
+      // NOTIFICATION LOGIC (Only trigger if order count actually increased)
+      if (!isInitial && prevOrders.length > 0 && orderList.length > prevOrders.length) {
+         playNotificationSound('order');
+         toast({ title: "New Order Received!", description: "A customer just placed a new order." });
+      }
+
+      if (!isInitial && prevOrders.length > 0) {
+        orderList.forEach(order => {
+          const prev = prevOrders.find(p => p.id === order.id);
+          if (prev && prev.status !== order.status) {
+            if (order.status === 'Ready') {
+              playNotificationSound('ready');
+              toast({ title: `Order #${order.id} is Ready!`, description: `Table ${order.tableNumber} is waiting for pickup.` });
+            }
+            if (order.status === 'Completed') {
+              playNotificationSound('paid');
+              toast({ title: `Order #${order.id} Paid!`, description: `Revenue updated in Sales Report.` });
+            }
+          }
+        });
+      }
 
       setMenuItems(menu);
       setOrders(orderList);
+      prevOrdersRef.current = orderList; // Update ref for next poll
 
-      // Only fetch users if Admin
       if (userRole?.toLowerCase() === 'admin') {
         try {
           const userList = await getUsers();
@@ -75,26 +96,25 @@ export function CafeProvider({ children }: { children: ReactNode }) {
         } catch {
           setUsers([]);
         }
-      } else {
-        setUsers([]);
       }
     } catch (err) {
       console.error('fetchAll error:', err);
-      toast({ variant: 'destructive', title: 'Failed to load data' });
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchAll();
-  }, []);
+    fetchAll(true);
+    const interval = setInterval(() => fetchAll(false), 1500); 
+    return () => clearInterval(interval);
+  }, [userRole]); // Refetch if role changes
 
   const refetch = async () => {
-    await fetchAll();
+    await fetchAll(false);
   };
 
-  // CART
+  // CART LOGIC
   const addToCart = (id: number) => {
     setCart(prev => {
       const exists = prev.find(i => i.menuItemId === id);
@@ -103,7 +123,7 @@ export function CafeProvider({ children }: { children: ReactNode }) {
         : [...prev, { menuItemId: id, quantity: 1 }];
     });
     const item = menuItems.find(i => i.id === id);
-    toast({ title: `${item?.name} added` });
+    toast({ title: `${item?.name} added to tray` });
   };
 
   const removeFromCart = (id: number) => {
@@ -122,17 +142,8 @@ export function CafeProvider({ children }: { children: ReactNode }) {
     return sum + (item?.price || 0) * c.quantity;
   }, 0);
 
-  // PLACE ORDER
   const placeOrder = async (name: string, table: string, notes?: string) => {
-    if (cart.length === 0) {
-      toast({ variant: 'destructive', title: 'Cart empty' });
-      return;
-    }
-    if (!name || !table) {
-      toast({ variant: 'destructive', title: 'Fill name & table' });
-      return;
-    }
-
+    if (cart.length === 0) return;
     try {
       await createOrder({
         customerName: name,
@@ -143,29 +154,37 @@ export function CafeProvider({ children }: { children: ReactNode }) {
       });
       clearCart();
       await refetch();
-      toast({ title: 'Order sent to kitchen!' });
+      // CartDisplay handles the sound for the person placing it
     } catch {
       toast({ variant: 'destructive', title: 'Failed to place order' });
     }
   };
 
-  // STATUS & PAYMENT
   const updateOrderStatus = async (orderId: number, status: OrderStatus) => {
+    // OPTIMISTIC UPDATE
+    const originalOrders = [...orders];
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
+
     try {
       await serverUpdateOrderStatus(orderId, status);
-      await refetch();
-      toast({ title: `Status to ${status}` });
+      // refetch in background to sync
+      fetchAll(false);
     } catch {
+      setOrders(originalOrders); // Revert on failure
       toast({ variant: 'destructive', title: 'Status update failed' });
     }
   };
 
   const updatePaymentStatus = async (orderId: number, status: PaymentStatus) => {
+    // OPTIMISTIC UPDATE
+    const originalOrders = [...orders];
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, paymentStatus: status } : o));
+
     try {
       await serverUpdatePaymentStatus(orderId, status);
-      await refetch();
-      toast({ title: 'Payment to Paid' });
+      fetchAll(false);
     } catch {
+      setOrders(originalOrders);
       toast({ variant: 'destructive', title: 'Payment update failed' });
     }
   };
@@ -173,21 +192,25 @@ export function CafeProvider({ children }: { children: ReactNode }) {
   const clearSalesData = async () => {
     try {
       await clearCompletedOrders();
-      await refetch();
-      toast({ title: 'Old orders cleared' });
+      await fetchAll(false);
+      toast({ title: 'System records cleared' });
     } catch {
       toast({ variant: 'destructive', title: 'Clear failed' });
     }
   };
 
-  // CHEF MENU CONTROL
   const toggleMenuItem = async (id: number, available: boolean) => {
+    // OPTIMISTIC UPDATE
+    const originalMenu = [...menuItems];
+    setMenuItems(prev => prev.map(m => m.id === id ? { ...m, isAvailable: available } : m));
+
     try {
       await toggleMenuItemAvailability(id, available);
-      await refetch();
-      toast({ title: available ? 'Back in stock!' : 'Sold out!' });
+      fetchAll(false);
+      toast({ title: available ? 'Item back online' : 'Item hidden from menu' });
     } catch (err: any) {
-      toast({ variant: 'destructive', title: err.message || 'Update failed' });
+      setMenuItems(originalMenu);
+      toast({ variant: 'destructive', title: 'Update failed' });
     }
   };
 

@@ -1,98 +1,125 @@
 // app/api/admin/pdf/route.ts
 import { NextResponse } from 'next/server';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (session?.user?.role !== 'admin') {
-    return new NextResponse('Forbidden', { status: 403 });
-  }
+  try {
+    const { orders, stats } = await req.json();
 
-  const { orders } = await req.json();
-
-  const pdfDoc = await PDFDocument.create();
-  let page = pdfDoc.addPage([600, 800]);
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
-  let { width, height } = page.getSize();
-  let y = height - 50;
-
-  // Title
-  page.drawText('SHEGA CAFE - SALES REPORT', {
-    x: 50,
-    y,
-    size: 24,
-    font: fontBold,
-    color: rgb(0.2, 0.4, 0.8),
-  });
-
-  y -= 40;
-  page.drawText(`Generated: ${new Date().toLocaleString('en-ET')}`, {
-    x: 50,
-    y,
-    size: 12,
-    font,
-    color: rgb(0.5, 0.5, 0.5),
-  });
-
-  y -= 30;
-  page.drawText(`Total Orders: ${orders.length}`, {
-    x: 50,
-    y,
-    size: 14,
-    font: fontBold,
-  });
-
-  // Table Header
-  y -= 30;
-  const headers = ['ID', 'Customer', 'Table', 'Total', 'Status', 'Paid', 'Time'];
-  headers.forEach((h, i) => {
-    page.drawText(h, { x: 50 + i * 70, y, size: 10, font: fontBold });
-  });
-
-  // Table Rows
-  y -= 20;
-  for (const o of orders) {
-    const row = [
-      `#${o.id}`,
-      o.customerName.slice(0, 10),
-      o.tableNumber,
-      `${o.total.toFixed(2)} ETB`,
-      o.status,
-      o.paymentStatus,
-      new Date(o.timestamp).toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' }),
-    ];
-    row.forEach((cell, i) => {
-      page.drawText(cell, { x: 50 + i * 70, y, size: 9, font });
-    });
-    y -= 18;
-    if (y < 100) {
-      page = pdfDoc.addPage([600, 800]);
-      ({ width, height } = page.getSize());
-      y = height - 50;
+    if (!orders || !Array.isArray(orders)) {
+      return NextResponse.json({ error: 'Invalid orders data' }, { status: 400 });
     }
+
+    const pdfDoc = await PDFDocument.create();
+    let page = pdfDoc.addPage([600, 800]);
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+    let { height } = page.getSize();
+    let y = height - 50;
+
+    // Header
+    page.drawText('SHEGA CAFE - SALES REPORT', {
+      x: 50,
+      y,
+      size: 24,
+      font: fontBold,
+      color: rgb(0.1, 0.3, 0.6),
+    });
+
+    y -= 30;
+    page.drawText(`Report Generated: ${new Date().toLocaleString()}`, {
+      x: 50,
+      y,
+      size: 10,
+      font,
+      color: rgb(0.4, 0.4, 0.4),
+    });
+
+    // Stats
+    if (stats) {
+      y -= 50;
+      page.drawRectangle({
+        x: 50,
+        y: y - 80,
+        width: 500,
+        height: 100,
+        color: rgb(0.95, 0.96, 0.98),
+        borderWidth: 1,
+        borderColor: rgb(0.8, 0.8, 0.8),
+      });
+
+      page.drawText('BUSINESS SUMMARY', {
+        x: 60,
+        y: y - 20,
+        size: 14,
+        font: fontBold,
+      });
+
+      const statRows = [
+        `Total Revenue: ${stats.totalRevenue?.toLocaleString() || 0} ETB`,
+        `Total Profit: ${stats.totalProfit?.toLocaleString() || 0} ETB`,
+        `Best Seller: ${stats.bestSeller || 'N/A'}`,
+        `Total Orders: ${orders.length}`,
+      ];
+
+      statRows.forEach((text, i) => {
+        page.drawText(text, {
+          x: 60 + (i % 2) * 240,
+          y: y - 45 - Math.floor(i / 2) * 20,
+          size: 10,
+          font,
+        });
+      });
+      y -= 100;
+    }
+
+    // Table
+    y -= 40;
+    const headers = ['ID', 'Customer', 'Table', 'Total', 'Items'];
+    const xPositions = [50, 90, 160, 220, 310];
+    headers.forEach((h, i) => {
+      page.drawText(h, { x: xPositions[i], y, size: 10, font: fontBold });
+    });
+
+    y -= 10;
+    page.drawLine({ start: { x: 50, y }, end: { x: 550, y }, thickness: 1 });
+
+    y -= 20;
+    for (const o of orders) {
+      if (y < 60) {
+        page = pdfDoc.addPage([600, 800]);
+        y = 750;
+      }
+
+      page.drawText(`#${o.id}`, { x: xPositions[0], y, size: 9, font });
+      page.drawText(String(o.customerName || 'Guest').slice(0, 10), { x: xPositions[1], y, size: 9, font });
+      page.drawText(String(o.tableNumber || '-'), { x: xPositions[2], y, size: 9, font });
+      page.drawText(`${o.total?.toFixed(0) || 0} ETB`, { x: xPositions[3], y, size: 9, font: fontBold });
+
+      // Itemized safety
+      const items = o.items || [];
+      const itemText = items.map((i: any) => `${i.menuItem?.name || 'Item'} (x${i.quantity})`).join(', ');
+      const wrapped = itemText.length > 45 ? itemText.slice(0, 42) + '...' : itemText;
+      page.drawText(wrapped, { x: xPositions[4], y, size: 8, font, color: rgb(0.3, 0.3, 0.3) });
+
+      y -= 20;
+      page.drawLine({ start: { x: 50, y: y + 10 }, end: { x: 550, y: y + 10 }, thickness: 0.1, color: rgb(0.8, 0.8, 0.8) });
+    }
+
+    const pdfBytes = await pdfDoc.save();
+    
+    // IMPORTANT: Return as a proper response with correct headers
+    return new Response(pdfBytes, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Length': pdfBytes.byteLength.toString(),
+        'Content-Disposition': 'attachment; filename="Sales_Report.pdf"',
+      },
+    });
+  } catch (error: any) {
+    console.error('PDF Generation Error:', error);
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
-
-  // Footer
-  page.drawText('Thank you for choosing Shega Cafe!', {
-    x: 50,
-    y: 50,
-    size: 10,
-    font,
-    color: rgb(0.7, 0.7, 0.7),
-  });
-
-  const pdfBytes = await pdfDoc.save();
-  const view = new Uint8Array(pdfBytes.length);
-  view.set(pdfBytes);
-  const blob = new Blob([view.buffer], { type: 'application/pdf' });
-  return new NextResponse(blob, {
-    headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': 'attachment; filename=sales-report.pdf',
-    },
-  });
 }

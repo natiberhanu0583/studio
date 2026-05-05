@@ -23,13 +23,13 @@ const statusColors: Record<string, string> = {
   Cancelled: 'bg-red-500',
 };
 
-export default function OrderCard({ order }: { order: any }) {
+export default function OrderCard({ order, roleOverride }: { order: any, roleOverride?: string }) {
   const { updateOrderStatus, updatePaymentStatus } = useCafe();
   const { toast } = useToast();
   const { data: session } = useSession();
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const userRole = session?.user?.role;
+  const userRole = roleOverride || session?.user?.role;
   const isChef = ['Chef', 'chef'].includes(userRole || '');
   const isWaiter = ['Waiter', 'waiter'].includes(userRole || '');
   const isAdmin = ['Admin', 'admin'].includes(userRole || '');

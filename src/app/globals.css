@@ -1,71 +1,117 @@
-/* @tailwind base;
-@tailwind components;
-@tailwind utilities; */
-
 @import "tailwindcss";
 @config "../../tailwind.config.js";
 
 @layer base {
   :root {
     --background: 0 0% 98%;
-    --foreground: 222.2 47.4% 11.2%;
+    --foreground: 150 50% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 47.4% 11.2%;
+    --card-foreground: 150 50% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 47.4% 11.2%;
-    --primary: 45 90% 55%;
-    --primary-foreground: 355.7 100% 97.3%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 215.4 16.3% 46.9%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --popover-foreground: 150 50% 10%;
+    /* Branding Emerald Green */
+    --primary: 142 76% 36%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 142 20% 95%;
+    --secondary-foreground: 142 76% 15%;
+    --muted: 142 10% 92%;
+    --muted-foreground: 142 10% 40%;
+    --accent: 142 76% 95%;
+    --accent-foreground: 142 76% 36%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 45 90% 55%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
+    --border: 142 20% 88%;
+    --input: 142 20% 88%;
+    --ring: 142 76% 36%;
+    --radius: 1.25rem;
   }
+
   .dark {
-    --background: 0 0% 8%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 8%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 45 90% 55%;
-    --primary-foreground: 45 90% 10%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 45 90% 55%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --background: 142 50% 4%;
+    --foreground: 142 20% 98%;
+    --card: 142 40% 7%;
+    --card-foreground: 142 20% 98%;
+    --popover: 142 50% 4%;
+    --popover-foreground: 142 20% 98%;
+    /* Vibrant Emerald for Dark Mode */
+    --primary: 142 71% 45%;
+    --primary-foreground: 142 50% 5%;
+    --secondary: 142 30% 12%;
+    --secondary-foreground: 142 20% 98%;
+    --muted: 142 30% 12%;
+    --muted-foreground: 142 10% 70%;
+    --accent: 142 76% 15%;
+    --accent-foreground: 142 71% 45%;
+    --border: 142 30% 12%;
+    --input: 142 30% 12%;
+    --ring: 142 71% 45%;
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border selection:bg-primary/20 selection:text-primary;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-300 font-sans;
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(142, 76%, 36%, 0.08) 0, transparent 40%),
+      radial-gradient(at 100% 0%, hsla(160, 76%, 36%, 0.08) 0, transparent 40%),
+      radial-gradient(at 100% 100%, hsla(142, 76%, 36%, 0.08) 0, transparent 40%),
+      radial-gradient(at 0% 100%, hsla(160, 76%, 36%, 0.08) 0, transparent 40%);
+    background-attachment: fixed;
+    min-height: 100vh;
+    letter-spacing: -0.01em;
   }
+  
+  .dark body {
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(142, 76%, 36%, 0.05) 0, transparent 40%),
+      radial-gradient(at 100% 0%, hsla(160, 76%, 36%, 0.05) 0, transparent 40%),
+      radial-gradient(at 100% 100%, hsla(142, 76%, 36%, 0.05) 0, transparent 40%),
+      radial-gradient(at 0% 100%, hsla(160, 76%, 36%, 0.05) 0, transparent 40%);
+  }
+}
+
+/* Custom Animations & Effects */
+@layer utilities {
+  .glass {
+    @apply bg-background/60 backdrop-blur-xl border border-white/10 shadow-2xl;
+  }
+  
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-emerald-400 via-emerald-600 to-teal-700;
+  }
+
+  .btn-gradient {
+    @apply bg-gradient-to-br from-emerald-500 to-teal-700 hover:from-emerald-400 hover:to-teal-600 shadow-lg shadow-emerald-900/20 active:scale-95 transition-all duration-300;
+  }
+
+  .btn-gradient-secondary {
+    @apply bg-gradient-to-br from-muted/50 to-muted hover:from-muted hover:to-muted/80 border border-emerald-600/10 shadow-sm transition-all duration-300;
+  }
+
+  .card-premium {
+    @apply bg-card/80 backdrop-blur-md border border-emerald-600/10 hover:border-emerald-600/30 transition-all duration-500 hover:shadow-2xl hover:shadow-emerald-600/10;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+}
+
+/* Page Transitions */
+.page-enter {
+  opacity: 0;
+  transform: scale(0.98);
+}
+.page-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 300ms, transform 300ms;
 }

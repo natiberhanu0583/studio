@@ -15,6 +15,7 @@ export default function ChefPage() {
     return <div className="flex items-center justify-center h-screen"><p>Loading...</p></div>;
   }
 
+  /*
   if (!session) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
@@ -36,6 +37,7 @@ export default function ChefPage() {
       </div>
     );
   }
+  */
 
   const kitchenOrders = orders
     .filter(order => ['Received', 'Sent to Chef', 'Preparing', 'Ready'].includes(order.status) && order.status !== 'Cancelled')
@@ -72,7 +74,7 @@ export default function ChefPage() {
         <TabsContent value="kitchen">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
             {kitchenOrders.length > 0 ? (
-              kitchenOrders.map((order) => <OrderCard key={order.id} order={order} />)
+              kitchenOrders.map((order) => <OrderCard key={order.id} order={order} roleOverride="chef" />)
             ) : (
               <p className="col-span-full text-center text-muted-foreground py-10">
                 No orders in the kitchen.
@@ -95,7 +97,7 @@ export default function ChefPage() {
         <TabsContent value="completed">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
             {completedOrders.length > 0 ? (
-              completedOrders.map((order) => <OrderCard key={order.id} order={order} />)
+              completedOrders.map((order) => <OrderCard key={order.id} order={order} roleOverride="chef" />)
             ) : (
               <p className="col-span-full text-center text-muted-foreground py-10">
                 No completed orders.

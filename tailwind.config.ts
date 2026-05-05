@@ -85,10 +85,20 @@ export default {
             height: '0',
           },
         },
+        'clock-rotate': {
+          from: {
+            transform: 'rotate(0deg)',
+          },
+          to: {
+            transform: 'rotate(360deg)',
+          },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'clock-hour': 'clock-rotate 12s linear infinite',
+        'clock-minute': 'clock-rotate 2s linear infinite',
       },
     },
   },

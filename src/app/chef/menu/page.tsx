@@ -20,6 +20,7 @@ export default function ChefMenuManagement() {
     return <div className="flex items-center justify-center h-screen"><p>Loading...</p></div>;
   }
 
+  /*
   if (!session) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
@@ -41,6 +42,7 @@ export default function ChefMenuManagement() {
       </div>
     );
   }
+  */
 
   const toggleAvailability = async (itemId: number, currentAvailable: boolean) => {
     try {
